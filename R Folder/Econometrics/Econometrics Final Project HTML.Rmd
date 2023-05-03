@@ -1,0 +1,278 @@
+---
+title: "Econometrics Final Project"
+author: "Luis Green"
+date: "2023-05-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Have a clear research question and you can clearly communicate how it can inform decision making. Make it clear and who should care and why. 
+
+### 1) You will need a clear research question and you can clearly communicate how your work can inform decision making. Make it clear with your question is and who should care. 
+
+How well can the variables in the "credit" data set explain the probability of loan default among credit applicants?
+
+This questions aims to investigate the relationship between the predictive variables and the dependent variable, which in this case is "default" in predicting the likelihood of loan default. I will be using a linear model to examine the strength and direction of the relationships between the variables and the extent to which they can explain the variance in default rates. 
+
+
+### 2) Choose your data set. 
+
+### 3) Explore your data set. Use a combination of descriptive statistics, scatter plots, histograms... 
+
+### 4) Explain why you choose this model to address your question. What are the stregnths of your choice? What are the weaknesses of your choice? Based on this, how much should I trust your results? 
+
+### 5) Make conclusions. these should flow from the insights you drew in your analysis. 
+
+In R, a string is a sequence of characters enclosed in quotation marks, such as "hello world". StringsAsFactors will automatically convert the character columns of the input data into factors. Factors in R are a type of variable that represent categorical data. They have a fixed set of possible values, which are called levels. We can then use the factors for statistical analysis and modeling.
+
+```{r}
+library(readr)
+credit <- read.csv("credit.csv", stringsAsFactors = TRUE)
+str(credit)
+```
+
+# Part 1) of the analysis will be breaking the data down. Understanding the variables and creating visuals to better interpret the data. 
+
+```{r}
+colnames(credit)
+```
+
+I am using the lapply() function to apply a function to each column of the data frame. The function checks whether each column is a factor using the is.factor() function. If a column is a factor, the function returns the levels of the factor using the levels() function. The levels() function returns a vector of the unique values of a factor, in the order they appear in the factor.
+
+We must turn some of the variables into factors to perform the tests. 
+```{r}
+# lapply(credit,function(x) if(is.factor(x)){levels(x)})
+# str(credit)
+```
+
+Let's take a look at the two characteristics of the applicant. The results are a frequency table that shows the number of times each value appears in the credit checking_balance column of the credit data frame. The different values of credit$checking_balance are displayed as the row names of the table, which are < 0 DM, > 200 DM, 1 - 200 DM, and unknown.
+
+The counts of each value appear in the corresponding columns of the table, where < 0 DM appears 274 times, > 200 DM appears 63 times, 1 - 200 DM appears 269 times, and unknown appears 394 times. We can see that the majority of the data falls into the unknown category, which suggests that there may be missing data or that this category was intentionally used to represent a certain group. We can also see that the number of values above 200 DM is relatively small compared to the other categories.
+
+For the table(credit$savings_balance) The counts of each value appear in the corresponding columns of the table, where < 100 DM appears 603 times, > 1000 DM appears 48 times, 100 - 500 DM appears 103 times, 500 - 1000 DM appears 63 times, and unknown appears 183 times. We can see that the majority of the data falls into the < 100 DM category, which suggests that many people have relatively low savings balances. We can also see that the number of values above 1000 DM is relatively small compared to the other categories. Additionally, there are a relatively large number of unknown values, which may indicate missing data or that this category was intentionally used to represent a certain group.
+```{r}
+# Show the different levels, they add up to 1000, Dutch Marks
+table(credit$checking_balance)
+table(credit$savings_balance)
+```
+
+Let's take a look at the two characteristics of the loan, which include "months_loan_duration" and "amount".
+The minimum value of months_loan_duration is 4, which is the smallest value in the dataset.
+The first quartile (25th percentile) is 12, which means that 25% of the loans have a duration of 12 months or less.
+The median (50th percentile) is 18, which means that 50% of the loans have a duration of 18 months or less.
+The mean duration of the loans is 20.9 months, which is the arithmetic average of all the durations.
+The third quartile (75th percentile) is 24, which means that 75% of the loans have a duration of 24 months or less.
+The maximum value of months_loan_duration is 72, which is the longest duration in the dataset.
+```{r}
+summary(credit$months_loan_duration)
+```
+The Min. value shows the minimum value of the credit$amount variable, which is 250 euros.
+The 1st Qu. value (first quartile) shows that 25% of the credit amounts are less than or equal to 1366 euros.
+The Median value shows that 50% of the credit amounts are less than or equal to 2320 euros.
+The Mean value shows the average value of the credit$amount variable, which is 3271 euros.
+The 3rd Qu. value (third quartile) shows that 75% of the credit amounts are less than or equal to 3972 euros.
+The Max. value shows the maximum value of the credit$amount variable, which is 18424 euros.
+```{r}
+summary(credit$amount)
+```
+Look at the class variable where 1 is no and yes is 2. No means Good that they did not defaulted, and yes means Bad or that they defaulted on the loan. There appears to 700 that did not default out of 1000 or 70%, while the remaining 30% defaulted. 
+```{r}
+table(credit$default)
+```
+```{r}
+levels(credit$default)
+```
+
+```{r}
+str(credit)
+```
+
+```{r}
+summary(credit)
+```
+The dataset has 1000 observations (rows) and 17 variables (columns).
+
+Most of the variables are categorical (indicated by the "Factor" data type), meaning they have a limited number of discrete values that represent different categories or levels. Some of the categorical variables have different numbers of levels: for example, the "checking_balance" variable has 4 levels, while the "credit_history" variable has 5 levels.
+
+Some of the variables are numeric (indicated by the "int" data type), meaning they represent continuous or discrete numerical values. Some of the numeric variables have different scales: for example, the "months_loan_duration" variable ranges from 6 to 72, while the "percent_of_income" variable ranges from 1 to 4. Some of the variables have missing values, indicated by the presence of "NULL" in the output.
+
+Overall, str(credit) provides a summary of the structure and data types of the variables in the dataset, which can be useful for understanding the data and preparing it for analysis.
+
+### Create a histogram of the age variable
+```{r}
+# Loading the library to create the visuals
+library(ggplot2)
+```
+````{r}
+ggplot(data = credit, aes(x = amount)) + 
+  geom_histogram(binwidth = 1000, color = "black", fill = "lightblue") +
+  labs(title = "Histogram of Loan Amounts", x = "Amount", y = "Frequency")
+
+```
+Data is skewed toward the left indicating that there is a higher frequency of loans that are in the range of 0 to 5,000.  
+```{r}
+library(ggplot2)
+ggplot(data = credit, aes(x = amount)) +
+  geom_histogram(binwidth = 500, fill = "blue", color = "black") +
+  labs(x = "Amount", y = "Count", title = "Histogram of Loan Amount")
+
+```
+
+```{r}
+ggplot(data = credit, aes(x = months_loan_duration)) +
+  geom_histogram(binwidth = 1, fill = "green", color = "black") +
+  labs(x = "Loan Duration (Months)", y = "Count", title = "Histogram of Loan Duration")
+
+```
+There appears to be a variation in the loan duration. The majority of loans last between 1 month and 30 months. This makes sense since most of the loans are less than $5,000 in value. Larger loans would require a longer time frame to repay it back. 
+```{r}
+ggplot(data = credit, aes(x = amount, y = percent_of_income)) +
+  geom_point(color = "red") +
+  labs(x = "Loan Amount", y = "Percent of Income", title = "Scatter Plot of Loan Amount vs. Percent of Income")
+```
+This was surprising. Weather loan as a percent of income were between 1% and 4% the loan amount was relatively in the same range. 
+```{r}
+ggplot(data = credit, aes(x = age, y = months_loan_duration)) +
+  geom_point(color = "blue") +
+  labs(x = "Age", y = "Loan Duration (Months)", title = "Scatter Plot of Age vs. Loan Duration")
+```
+This scatter plot was an interesting one given the relationship between age and loan amount. There does not appear to be a consistent pattern. However, the bulk of the data is between 20 months and age 50. 
+
+
+## Part 3) I will be creating a linear model.
+
+First, we need to identify the response or dependent variable and the predictor or independent variables. In this case, the dependent variable is the "default" variable, which indicates whether a person defaulted on a credit loan (yes or no).
+
+We can use the other variables as predictors, but we need to make sure they are appropriate for a linear model. For example, the "checking_balance" and "savings_balance" variables are categorical, so we need to convert them into numerical variables using dummy encoding or one-hot encoding. Similarly, the "credit_history", "purpose", "employment_duration", "other_credit", "housing", and "job" variables are also categorical, so we need to convert them into numerical variables using the same method.
+
+Once we have converted the categorical variables into numerical variables, we can use them as predictors in a linear model. We can use the "months_loan_duration", "amount", "percent_of_income", "years_at_residence", "age", "existing_loans_count", and "dependents" variables as numerical predictors directly.
+
+This model will fit a linear regression line to predict the default variable based on the amount and months_loan_duration variables in the credit dataset. The lm() function specifies the formula for the linear model, and the data argument tells R to use the credit dataset. The summary() function will display the summary of the linear model, including the coefficients and their corresponding p-values.
+```{r}
+credit <- na.omit(credit)
+str(credit$default)
+# Turning the factor variables into numeric variables to use them for the linear model
+credit$amount <- as.numeric(credit$amount)
+credit$months_loan_duration <- as.numeric(credit$months_loan_duration)
+credit$default <- as.numeric(credit$default)
+credit$credit_history <- factor(credit$credit_history, levels = c("critical", "good", "poor", "perfect", "very good"))
+credit$credit_history <- as.numeric(credit$credit_history) - 1
+credit$job <- as.numeric(credit$job)
+credit$percent_of_income <- as.numeric(credit$percent_of_income)
+credit$employment_duration <- as.numeric(credit$employment_duration)
+credit$years_at_residence <- as.numeric(credit$years_at_residence)
+credit$default <- ifelse(credit$default == "no", 1, 0)
+str(credit$default)
+unique(credit$credit_history)
+str(credit$credit_history)
+str(credit)
+```
+```{r}
+str(credit$amount)
+str(credit$months_loan_duration)
+str(credit$credit_history)
+str(credit$job)
+str(credit$percent_of_income)
+str(credit$employment_duration)
+str(credit$years_at_residence)
+str(credit)
+```
+Checking for multicollinearity. 
+```{r}
+credit_num <- credit[, c("default", "amount", "months_loan_duration", "credit_history", "percent_of_income", "years_at_residence")]
+cor(credit_num)
+```
+The diagonal elements are all equal to 1 because they represent the correlation between a variable and itself, which is always perfect. The non-diagonal elements show the correlation between pairs of variables. For example, the correlation between "default" and "amount" is -0.1547, indicating a weak negative correlation.
+
+The strongest correlation is between "amount" and "months_loan_duration" with a value of 0.625, indicating a moderate positive correlation.
+There is also a weak negative correlation between "default" and "percent_of_income" (-0.0724) and a weak positive correlation between "percent_of_income" and "years_at_residence" (0.0493).
+
+Overall, there is no significant multicollinearity issue, as all the correlation coefficients are below 0.7, and no two variables are highly correlated with each other.
+
+Next I am displaying a circle plot of the correlation matrix, where the size and color of the circles indicate the strength and direction of the correlation between the variables. 
+```{r}
+library(corrplot)
+corrplot(cor(credit_num), type = "upper", method = "circle")
+```
+The variance Inflation Factor (VIF) measures the degree of multicollinearity among predictor variables in a regression model. Typically, a VIF of 1 indicates no correlation between the predictor variables and other variables, while a VIF greater than 1 indicates some degree of correlation. A VIF greater than 5 or 10 indicates high multicollinearity. If any of the VIF values are high, you may need to remove one or more of the correlated variables from the model to avoid issues with multicollinearity.  
+```{r}
+library(car)
+vif(lm(default ~ amount + months_loan_duration + credit_history + percent_of_income + years_at_residence, data = credit))
+```
+In this case, the VIF values for the variables amount, months_loan_duration, percent_of_income, and years_at_residence are all below 2. This indicates that there is not a significant degree of multicollinearity among these variables. Therefore, we can say that these variables are not highly correlated with each other in the model.
+
+Fit the linear model
+```{r}
+model <- lm(default ~ amount + months_loan_duration + credit_history + percent_of_income + years_at_residence, data = credit)
+
+# view the summary of the model
+summary(model)
+```
+The model shows that the default variable is significantly associated with the amount, months_loan_duration, credit_history, and percent_of_income variables. The years_at_residence variable is not a significant predictor of the default variable. The model has a low R-squared value, indicating that the predictors explain only a small proportion of the variation in the default variable. The model's overall significance level is very low, indicating that the predictors as a group have a significant effect on the default variable.
+
+
+
+I am going to use stepwise selection to select the best variables. This will perform forward and backward stepwise seleciton to find the best variables to include in the model. 
+```{r}
+model_1 <- lm(default ~ amount + months_loan_duration + credit_history + percent_of_income + years_at_residence, data = credit)
+# step(model_1)
+```
+The stepwise selection procedure has identified that the variable "years_at_residence" does not significantly improve the model, and thus it can be removed. In addition, "years_at_residence" had a high p-value. I will be removing this variable from the model. 
+
+```{r}
+model_2 <- lm(default ~ amount + months_loan_duration + credit_history + percent_of_income, data = credit)
+summary(model_2);summary(model_1)
+```
+In this case, the adjusted R-squared values are very similar, with model_2 having an adjusted R-squared of 0.09058 and model_1 having an adjusted R-squared of 0.08967. This suggests that both models explain a similar amount of variation in the dependent variable, default.
+
+Next, we can look at the F-statistic and p-value for each model. In both models, the F-statistic is significant with a very small p-value (< 2.2e-16), indicating that both models have significant predictive power.
+
+Finally, we can compare the coefficients of the predictors in each model. We can see that the coefficient estimates are almost identical in both models, with the only difference being the addition of the predictor years_at_residence in model_1. However, this predictor has a non-significant p-value of 0.94349, suggesting that it does not significantly contribute to the predictive power of the model.
+
+Overall, based on these comparisons, it appears that model_2 and model_1 have very similar performance, with model_2 having slightly better adjusted R-squared value. Therefore, we might prefer model over model_2 due to its simplicity, as it has fewer predictors but still performs similarly.
+
+## Other Questions
+
+### 1) Which variables have a statistically significant relationship with the dependent variable "default" at a certain level of significance?
+
+The variables "months_loan_duration", "credit_history", and "percent_of_income" have a statistically significant relationship with the dependent variable "default" at a significance level of 0.05 or less. The "amount" variable has a p-value of 0.09740, which indicates that the relationship with "default" is not statistically significant at a 0.05 level of significance.
+
+### 2) How much does a unit increase in the "amount" variable affect the probability of default, holding all other variables constant?
+
+A unit increase in the "amount" variable results in a decrease of 1.141e-05 in the probability of default, holding all other variables constant. However, this coefficient has a p-value of 0.09740, which indicates that the relationship between "amount" and "default" is not statistically significant at a 0.05 level of significance.
+
+### 3) What is the estimated change in the probability of default associated with a one-month increase in the "months_loan_duration" variable, while controlling for other variables?
+
+A one-month increase in the "months_loan_duration" variable results in a decrease of 5.133e-03 in the probability of default, holding all other variables constant. This coefficient has a p-value of 0.00104, indicating that the relationship between "months_loan_duration" and "default" is statistically significant at a 0.05 level of significance.
+
+### 4) How does the level of "credit_history" affect the probability of defaulting on a loan, while holding other variables constant?
+
+The level of "credit_history" has a statistically significant effect on the probability of defaulting on a loan. An increase of one unit in "credit_history" results in a decrease of 9.577e-02 in the probability of default, holding all other variables constant. This coefficient has a p-value of 1.97e-11, indicating that the relationship between "credit_history" and "default" is statistically significant at a 0.05 level of significance.
+
+### 5) What is the expected change in the probability of default for every 1% increase in "percent_of_income", holding other variables constant?
+
+The expected change in the probability of default for every 1% increase in "percent_of_income" is a decrease of 3.545e-02, holding all other variables constant. This coefficient has a p-value of 0.00923, indicating that the relationship between "percent_of_income" and "default" is statistically significant at a 0.05 level of significance.
+
+
+### 1) You will need a clear research question and you can clearly communicate how your work can inform decision making. Make it clear with your question is and who should care. 
+
+How well can the variables in the "credit" data set explain the probability of loan default among credit applicants?
+
+This questions aims to investigate the relationship between the predictive variables and the dependent variable, which in this case is "default" in predicting the likelihood of loan default. I will be using a linear model to examine the strength and direction of the relationships between the variables and the extent to which they can explain the variance in default rates. 
+
+```{r}
+summary(model_2)
+```
+Based on the summary of my linear model "model_2". 
+
+The intercept has a significant positive coefficient (p-value < 0.001), which indicates that the probability of loan default is 1.048 when all other variables are equal to zero.
+The coefficient for the amount variable is negative, but it is not statistically significant (p-value > 0.05), which means that the amount borrowed does not have a significant effect on the probability of loan default.
+The coefficient for the months_loan_duration variable is negative and statistically significant (p-value < 0.01), which suggests that the longer the loan duration, the lower the probability of loan default.
+The coefficient for the credit_history variable is negative and highly statistically significant (p-value < 0.001), which implies that a good credit history is associated with a lower probability of loan default.
+The coefficient for the percent_of_income variable is negative and statistically significant (p-value < 0.05), indicating that a lower percentage of income devoted to loan repayment is associated with a lower probability of loan default.
+The adjusted R-squared value is 0.09058, indicating that the independent variables in the model can explain only about 9% of the variance in loan defaults.
+
+Overall, we can use this model to draw some conclusions about the relationship between the selected independent variables and the probability of loan default. However, the low R-squared value suggests that other factors not included in the model may also play a significant role in determining the likelihood of loan default.
